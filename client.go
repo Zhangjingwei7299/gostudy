@@ -3,6 +3,7 @@ package main
 import (
 	"fmt"
 	"net"
+	"flag"
 )
 type Client struct{
 	ServerIp string
@@ -32,8 +33,19 @@ func NewClient(serverIp string,serverPort int)*Client{
 	return client
 }
 
+var serverIp string
+var serverPort int
+// ./client -ip 127.0.0.1 -ip 8888
+// 第一个是变量名，第二个是ip提示符，第三个是默认值
+func init(){
+	flag.StringVar(&serverIp,"ip","127.0.0.1","设置服务器IP地址(默认地址:127.0.0.1)")
+	flag.IntVar(&serverPort,"port",8888,"设置服务器端口(默认:8888)")
+}
+
 func main(){
-	client:=NewClient("127.0.0.1",8888)
+	//命令行解析
+	flag.Parse()
+	client:=NewClient(serverIp,serverPort)
 	if client ==nil{
 		fmt.Println(">>>>>>>>连接失败....")
 		return
