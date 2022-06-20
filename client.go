@@ -4,6 +4,8 @@ import (
 	"fmt"
 	"net"
 	"flag"
+	"io"
+	"os"
 )
 type Client struct{
 	ServerIp string
@@ -35,6 +37,12 @@ func NewClient(serverIp string,serverPort int)*Client{
 }	
 
 
+//处理server回应的消息，直接显示到标准输出即可
+func (client *Client)DealResponse(){
+	//一旦client.conn有消息就直接copy到stdout标准输出上，永久阻塞监听
+	io.Copy(os.Stdout,client.conn)
+}
+
 func (client *Client)menu()bool{
 	var flag int
 	
@@ -55,6 +63,20 @@ func (client *Client)menu()bool{
 }
 
 
+func (client *Client)UpdateName()bool{
+	
+	fmt.Println(">>>>>>>>请输入用户名:")
+	fmt.Scanln(&client.Name)
+
+	sendMsg:="rename|"+client.Name+"\n"
+	_,err :=client.conn.Write([]byte(sendMsg))
+	if err!=nil{
+		fmt.Println("conn.Write err:",err)
+		return false
+	}
+	return true
+}
+
 func (client *Client)Run(){
 	for client.flag!=0{
 		for client.menu()!=true{
@@ -72,7 +94,7 @@ func (client *Client)Run(){
 			break
 		case 3:
 			//更新用户名
-			fmt.Println("更新用户名选择...")
+			client.UpdateName()
 			break
 			
 		}
@@ -97,6 +119,9 @@ func main(){
 		fmt.Println(">>>>>>>>连接失败....")
 		return
 	}
+
+	//但股开启一个roroutine去处理server的回应
+	go client.DealResponse()
 	fmt.Println(">>>>连接服务器成功...")
 	//启动客户端的业务
 	client.Run()
